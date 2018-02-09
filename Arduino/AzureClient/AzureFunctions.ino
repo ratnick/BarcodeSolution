@@ -272,9 +272,9 @@ int transmitDataOnWifiDELETE(int payloadSize, imageBufferSourceEnum imageBufferS
 	int chunkEnd = 0;
 	int nextChunk = 0;
 	//const int chunkSize = 2000;
-	const int chunkSize = BYTES_PER_PIXEL*(XCROP_END - XCROP_START + 1);   // one line's uncropped pixels (2 bytes per pixel)
+	const int chunkSize = BYTES_PER_PIXEL*(YCROP_END - YCROP_START + 1);   // one line's uncropped pixels (2 bytes per pixel)
 	uint8_t buffer[chunkSize];
-	uint8_t discardbuffer[BYTES_PER_PIXEL*IMAGE_WIDTH ];
+	uint8_t discardbuffer[BYTES_PER_PIXEL*IMAGE_HEIGHT ];
 
 	readAndDiscardFirstByteFromCam();
 	
@@ -294,11 +294,11 @@ int transmitDataOnWifiDELETE(int payloadSize, imageBufferSourceEnum imageBufferS
 		else {
 			// read directly from camera and transmit over wifi
 			// read from line start to crop start and discard it
-			readChunkFromCamToBuffer(discardbuffer, BYTES_PER_PIXEL*(XCROP_START - 1));
+			readChunkFromCamToBuffer(discardbuffer, BYTES_PER_PIXEL*(YCROP_START - 1));
 			// read from crop start to crop end and buffer it
 			readChunkFromCamToBuffer(buffer, (chunkEnd - chunkStart));
 			// read from crop end to line end and discard it
-			readChunkFromCamToBuffer(discardbuffer, BYTES_PER_PIXEL*(IMAGE_WIDTH - XCROP_END));
+			readChunkFromCamToBuffer(discardbuffer, BYTES_PER_PIXEL*(IMAGE_HEIGHT - YCROP_END));
 		}
 		//Serial.printf("\n(start:%d, end:%d, payload:%d, written:%d) Sending", chunkStart, chunkEnd, payloadSize, bytesWritten);
 		//dumpBinaryData(buffer, 10);

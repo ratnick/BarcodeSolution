@@ -18,8 +18,8 @@ namespace ReadSerialPortWin
 {
     public partial class frmPrinc : Form
     {
-        private const int HEIGHT = 240; //240; //120;
         private const int WIDTH = 320; //320; //30; //160;
+        private const int HEIGHT = 240; //240; //120;
         private int width = 0;
         private int height = 0;
         private int pixelSize = 0; //bytes per pixel
@@ -111,7 +111,6 @@ namespace ReadSerialPortWin
         }
 
         private void yvu422_RGB(byte[] yvu, int i, ref Color pix1, ref Color pix2)
-            //NOTE: This proc has not been thorougly tested!!!!!
         {
             i--;
             byte Y1 = yvu[++i];  //best
@@ -181,7 +180,7 @@ namespace ReadSerialPortWin
                             s = s + " " + i.ToString() + ":" + header_buffer[i].ToString();
                         }
                         Trace.WriteLine("*** DUMP: " + s);
-                        Trace.WriteLine("*** ERROR: Height or width inconsistent. \nReceived height=" + height.ToString() + " HEIGHT=" + HEIGHT.ToString() + " received width=" + width.ToString() + " WIDTH=" + WIDTH.ToString());
+                        Trace.WriteLine("*** WARNING: Height or width inconsistent. \nReceived width=" + width.ToString() + " WIDTH=" + WIDTH.ToString() + " received height=" + height.ToString() + " HEIGHT=" + HEIGHT.ToString() );
                     }
                     bytesRead = 0;
                     header_buffer[0] = 0;
@@ -249,8 +248,7 @@ namespace ReadSerialPortWin
 
                 // process the data
 
-                // Mirror the picture line by line
-                int pixWidth = pixelSize * height; 
+                int pixHeight = pixelSize * height; 
                 int i = 0;
                 int j = 0;
                 byte[] rawData = new byte[totalImageSize];
@@ -258,40 +256,15 @@ namespace ReadSerialPortWin
                 switch (ColorSpace)
                 {
                     case COLORSPACE.YUV422:
-                        /*for (i=0;i<totalImageSize;i++)
-                        {
-                            imgBuf[totalImageSize - i - 1] = rawData[i];
-                        }
-                        /*for (int h = 0; h < width; h++)
-                        {
-                            int offset = h * pixWidth;
-                            for (int w = 0; w < pixWidth; w++)
-                            {
-                                i = offset + w;
-                                j = offset + (pixWidth - 1) - w;
-                                if (i < 0 || i >= totalImageSize || j < 0 || j >= totalImageSize)
-                                {
-                                    Trace.WriteLine("h=" + h + " offset=" + offset + " pixw=" + pixWidth + " i=" + i + " j=" + j);
-                                }
-                                else
-                                {
-                                    //Trace.WriteLine("i=" + i.ToString() + " imgBuf[i]=" + imgBuf[i].ToString() + "   j=" + j.ToString() + " rawData[j]=" + rawData[j].ToString()); 
-                                    imgBuf[i] = rawData[j];
-                                }
-                            }
-                        }
-                        Trace.WriteLine("ConvertImageFileFormat: mirroring done");*/
 
                         for (int y = 0; y < height; y++)
                         {
                             for (int x = 0; x < width; x += 2)
                             {
-                                i = (y * width * pixelSize) + x*2;
+                                i = (y * width * pixelSize) + x * 2;
                                 yvu422_RGB(imgBuf, i, ref pix1, ref pix2);
-                               MyBitmap.SetPixel(x,y, pix1);
-                               MyBitmap.SetPixel(x,y, pix2);
-//                                MyBitmap.SetPixel(height - 1 - y, width - (x) - 1, pix1);
-//                                MyBitmap.SetPixel(height - 1 - y, width - (x+1) - 1, pix2);
+                                MyBitmap.SetPixel( x+1, height - 1 - y, pix1);
+                                MyBitmap.SetPixel( x  , height - 1 - y, pix2);
                             }
                         }
                         break;
@@ -337,18 +310,6 @@ namespace ReadSerialPortWin
                     default:
                         break;
                 }
-                // Convert the raw data to bitmap format
-                /*Rectangle rect = new Rectangle(0, 0, width, height);
-                BitmapData bData = MyBitmap.LockBits(rect, System.Drawing.Imaging.ImageLockMode.ReadWrite, MyBitmap.PixelFormat);
-
-                IntPtr ptr = bData.Scan0;
-                System.Runtime.InteropServices.Marshal.Copy(imgBuf, 0, ptr, totalImageSize);
-                */
-
-                //MyBitmap.UnlockBits(bData);
-                //                rgb565swapped(ref imgBuf, width, height, pixelSize, totalImageSize);
-                //                PrintBuffer(imgBuf, idx);
-
 
                 // display the image
                 using (var memoryStream = new MemoryStream())
