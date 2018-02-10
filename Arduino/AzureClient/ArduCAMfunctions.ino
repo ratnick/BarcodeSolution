@@ -78,14 +78,14 @@ void initArduCAM() {
 		}
 //	}case OV7670 x2
 #endif
-		myCAM.set_format(BMP);
+//-		myCAM.set_format(BMP);
 
-//+		myCAM.set_format(JPEG);
+		myCAM.set_format(JPEG);
 		myCAM.InitCAM();
 
 //	myCAM.set_format(JPEG);  // note: this does NOT apply to OV7670. It always produces RAW.
 #if defined (OV7670_CAM)
-//+		setCamBit(0x12, BIT7, 1);  // SCCB register reset
+		setCamBit(0x12, BIT7, 1);  // SCCB register reset
 //		myCAM.set_format(BMP);  // 320 x 240 RAW RGB565 (big endian = swapped bytes) 
 
 	//setCamBit(0x0C, BIT3, 1);  // Scale enable
@@ -168,13 +168,14 @@ void setCamByte(byte addr, byte val) {
 void takePicture(long &nbrOfBytes, short &finalWidth, short &finalHeight, short &pixelSize) {
 
 	myCAM.set_format(JPEG);
-	myCAM.set_format(BMP);
+	//-myCAM.set_format(BMP);
 	myCAM.InitCAM();
-	setCamBit(0x12, BIT7, 1);  // SCCB register reset
+	//-setCamBit(0x12, BIT7, 1);  // SCCB register reset
 	// Working setup (next 2 lines):
 	setCamBit(0x12, BIT2, 0); setCamBit(0x12, BIT0, 0); // YUV 
 	setCamBit(0x40, BIT4, 0); // Raw RGB (in combination with above)
-	
+	setCamBit(0x13, BIT2, 1);  // AGC enable/disable
+
 	// Set up special effects on cam
 	//setCamByte(0x70, 0b10001000); // Grayscale test pattern + scaling
 	//setCamBit(0x12, BIT2, 0); setCamBit(0x12, BIT0, 0); // YUV 

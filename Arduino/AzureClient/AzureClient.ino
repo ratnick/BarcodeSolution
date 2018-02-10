@@ -11,7 +11,7 @@
 #define TAKE_AND_UPLOAD_PICTURE_TO_BLOB true
 #define CALL_BARCODERECOGNITION_WEBJOB true
 //#define USE_WIFI  // If undefined, the serial port is used instead
-#define DEBUG_PRINT
+//#define DEBUG_PRINT
 
 // The Arduino device itself
 DeviceConfig wifiDevice;
@@ -23,10 +23,10 @@ WiFiClient wifiClient;
 MessageData msgData;
 #define IMAGE_WIDTH 320
 #define XCROP_START 1	// PIXELS starting with 1, MUST BE UN-EQUAL
-#define XCROP_END 4	// PIXELS, MUST BE EQUAL
+#define XCROP_END 50	// PIXELS, MUST BE EQUAL
 #define IMAGE_HEIGHT 240
 #define YCROP_START 1	// PIXELS starting with 1, MUST BE UN-EQUAL
-#define YCROP_END 4	// PIXELS, MUST BE EQUAL
+#define YCROP_END 50	// PIXELS, MUST BE EQUAL
 
 #define BYTES_PER_PIXEL 2 //both RGB565 and YUV422
 static String IMAGE_TYPE = "YUV422";

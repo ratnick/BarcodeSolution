@@ -67,6 +67,7 @@ namespace ReadSerialPortWin
                     cboSerialPorts.Items.Add(name);
                 }
                 cboSerialPorts.SelectedItem = names[0];
+                cboSerialPorts.SelectedItem = names[names.Length - 1];
                 return true;
             }
 
