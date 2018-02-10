@@ -25,10 +25,10 @@ MessageData msgData;
 #define IMAGE_HEIGHT 240	// MUST CORRESPOND TO THE RAW READ-OUT FORMAT FROM THE CAMERA
 
 // Used for on-board cropping:
-#define XCROP_START    1	// PIXELS starting with 1, MUST BE UN-EQUAL. 
-#define XCROP_END    320	// PIXELS, MUST BE EQUAL
-#define YCROP_START   71	// PIXELS starting with 1, MUST BE UN-EQUAL
-#define YCROP_END    130	// PIXELS, MUST BE EQUAL
+#define XCROP_START   23	// PIXELS starting with 1, MUST BE UN-EQUAL. 
+#define XCROP_END    310	// PIXELS, MUST BE EQUAL
+#define YCROP_START  101	// PIXELS starting with 1, MUST BE UN-EQUAL
+#define YCROP_END    150	// PIXELS, MUST BE EQUAL
 
 #define BYTES_PER_PIXEL 2 //both RGB565 and YUV422
 static String IMAGE_TYPE = "YUV422";
@@ -80,6 +80,7 @@ void setup() {
 
 
 	initFlashLED();
+	initPushButton();
 	LED_Flashes(5, 25);
 	initArduCAM();
 	delay(100);
@@ -115,6 +116,9 @@ void loop() {
 				delay(2000);
 			} */
 		} else {
+			Serial.println("before button)");
+			//waitUntilButtonPushed();
+			Serial.println("after button)");
 			LED_ON();
 			takePicture(msgData.blobSize, finalWidth, finalHeight, pixelSize);  // note that this number indicates the size of the CROPPED image
 			LED_OFF();
