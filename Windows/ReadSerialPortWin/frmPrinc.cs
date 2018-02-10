@@ -180,8 +180,9 @@ namespace ReadSerialPortWin
                         {
                             s = s + " " + i.ToString() + ":" + header_buffer[i].ToString();
                         }
-                        Trace.WriteLine("*** DUMP: " + s);
                         Trace.WriteLine("*** WARNING: Height or width inconsistent. \nReceived width=" + width.ToString() + " WIDTH=" + WIDTH.ToString() + " received height=" + height.ToString() + " HEIGHT=" + HEIGHT.ToString() );
+                        Trace.WriteLine("*** DUMP of header: " + s);
+                        Trace.WriteLine("    (If numbers received are too crazy, maybe DEBUG_PRINT is on? )");
                     }
                     bytesRead = 0;
                     header_buffer[0] = 0;

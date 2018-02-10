@@ -21,12 +21,14 @@ WiFiClient wifiClient;
 
 // Image storage globals
 MessageData msgData;
-#define IMAGE_WIDTH 320
-#define XCROP_START 1	// PIXELS starting with 1, MUST BE UN-EQUAL
-#define XCROP_END 50	// PIXELS, MUST BE EQUAL
-#define IMAGE_HEIGHT 240
-#define YCROP_START 1	// PIXELS starting with 1, MUST BE UN-EQUAL
-#define YCROP_END 50	// PIXELS, MUST BE EQUAL
+#define IMAGE_WIDTH  320	// MUST CORRESPOND TO THE RAW READ-OUT FORMAT FROM THE CAMERA
+#define IMAGE_HEIGHT 240	// MUST CORRESPOND TO THE RAW READ-OUT FORMAT FROM THE CAMERA
+
+// Used for on-board cropping:
+#define XCROP_START    1	// PIXELS starting with 1, MUST BE UN-EQUAL. 
+#define XCROP_END    320	// PIXELS, MUST BE EQUAL
+#define YCROP_START   71	// PIXELS starting with 1, MUST BE UN-EQUAL
+#define YCROP_END    130	// PIXELS, MUST BE EQUAL
 
 #define BYTES_PER_PIXEL 2 //both RGB565 and YUV422
 static String IMAGE_TYPE = "YUV422";

@@ -45,7 +45,7 @@
             // 
             this.picImage.Location = new System.Drawing.Point(12, 33);
             this.picImage.Name = "picImage";
-            this.picImage.Size = new System.Drawing.Size(240, 320);
+            this.picImage.Size = new System.Drawing.Size(372, 240);
             this.picImage.TabIndex = 0;
             this.picImage.TabStop = false;
             // 
@@ -71,15 +71,15 @@
             // 
             this.cboSerialPorts.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cboSerialPorts.FormattingEnabled = true;
-            this.cboSerialPorts.Location = new System.Drawing.Point(332, 34);
+            this.cboSerialPorts.Location = new System.Drawing.Point(390, 35);
             this.cboSerialPorts.Name = "cboSerialPorts";
-            this.cboSerialPorts.Size = new System.Drawing.Size(64, 21);
+            this.cboSerialPorts.Size = new System.Drawing.Size(75, 21);
             this.cboSerialPorts.TabIndex = 3;
             // 
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(272, 38);
+            this.label2.Location = new System.Drawing.Point(387, 19);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(54, 13);
             this.label2.TabIndex = 4;
@@ -87,7 +87,7 @@
             // 
             // btnStart
             // 
-            this.btnStart.Location = new System.Drawing.Point(275, 98);
+            this.btnStart.Location = new System.Drawing.Point(390, 98);
             this.btnStart.Name = "btnStart";
             this.btnStart.Size = new System.Drawing.Size(75, 23);
             this.btnStart.TabIndex = 5;
@@ -97,7 +97,7 @@
             // 
             // btnStop
             // 
-            this.btnStop.Location = new System.Drawing.Point(390, 98);
+            this.btnStop.Location = new System.Drawing.Point(479, 98);
             this.btnStop.Name = "btnStop";
             this.btnStop.Size = new System.Drawing.Size(75, 23);
             this.btnStop.TabIndex = 6;
@@ -107,9 +107,9 @@
             // 
             // btnCheckPorts
             // 
-            this.btnCheckPorts.Location = new System.Drawing.Point(402, 33);
+            this.btnCheckPorts.Location = new System.Drawing.Point(479, 34);
             this.btnCheckPorts.Name = "btnCheckPorts";
-            this.btnCheckPorts.Size = new System.Drawing.Size(63, 23);
+            this.btnCheckPorts.Size = new System.Drawing.Size(75, 23);
             this.btnCheckPorts.TabIndex = 7;
             this.btnCheckPorts.Text = "&Check";
             this.btnCheckPorts.UseVisualStyleBackColor = true;
@@ -117,9 +117,9 @@
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(275, 157);
+            this.btnSave.Location = new System.Drawing.Point(390, 154);
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(190, 23);
+            this.btnSave.Size = new System.Drawing.Size(164, 23);
             this.btnSave.TabIndex = 8;
             this.btnSave.Text = "Save &picture";
             this.btnSave.UseVisualStyleBackColor = true;
@@ -136,7 +136,7 @@
             this.AcceptButton = this.btnStart;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(480, 363);
+            this.ClientSize = new System.Drawing.Size(566, 298);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnCheckPorts);
             this.Controls.Add(this.btnStop);
