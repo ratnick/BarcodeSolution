@@ -5,12 +5,12 @@ void initFlashLED(){
 
 void LED_ON()
 {
-	digitalWrite(LED_PIN, HIGH);
+	digitalWrite(LED_PIN, LOW);
 }
 
 void LED_OFF()
 {
-	digitalWrite(LED_PIN, LOW);
+	digitalWrite(LED_PIN, HIGH);
 }
 
 void LED_Flashes(int count, int blinkDelayMs)
@@ -22,3 +22,16 @@ void LED_Flashes(int count, int blinkDelayMs)
 		delay(blinkDelayMs);
 	}
 }
+
+void initPushButton() {
+	pinMode(PUSHBUTTON_PIN, INPUT);
+}
+
+void waitUntilButtonPushed() {
+	Serial.print("\nWait for button to be pressed");
+	while (!digitalRead(PUSHBUTTON_PIN)) {
+		delay(50);
+	}
+	Serial.println("...done");
+}
+

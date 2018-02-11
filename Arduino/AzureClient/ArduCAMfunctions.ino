@@ -55,8 +55,8 @@ void initArduCAM() {
 	} 
 
 	// sent to Azure in HTTP call
-	msgData.imageWidth =  XCROP_END - XCROP_START + 1;
-	msgData.imageHeight = YCROP_END - YCROP_START + 1; 
+	msgData.imageWidth =  YCROP_END - YCROP_START + 1;
+	msgData.imageHeight = XCROP_END - XCROP_START + 1; 
 	msgData.imageType = IMAGE_TYPE;
 
 #if defined (OV2640_CAM)
@@ -78,6 +78,7 @@ void initArduCAM() {
 		}
 //	}case OV7670 x2
 #endif
+//-		myCAM.set_format(BMP);
 
 		myCAM.set_format(JPEG);
 		myCAM.InitCAM();
@@ -113,6 +114,12 @@ void initArduCAM() {
 #endif
 }
 
+int getSetBitLocation(byte b) {
+	int i = 0;
+	while (!((b >> i++) & 0x01)) { ; }
+	return i-1;
+}
+
 void setCamBit(byte addr, byte bit, byte setVal) {
 	byte orgVal; 
 	byte newVal;
@@ -131,13 +138,13 @@ void setCamBit(byte addr, byte bit, byte setVal) {
 	myCAM.wrSensorReg8_8(addr, newVal);
 	dummy = myCAM.rdSensorReg8_8(addr, &checkVal);
 
-	Serial.printf(" SET BIT %x  at addr 0x%x", bit, addr); 
+/*	Serial.printf(" SET BIT %i  at addr 0x%x", getSetBitLocation(bit), addr);
 	Serial.printf("  tmp= %x", tmp);
 	Serial.printf("  setVal= %x", setVal);
 	Serial.printf("  orgVal= %x ", orgVal);
 	Serial.printf(" newVal= %x ", newVal);
 	Serial.printf(" checkVal= %x \n", checkVal);
-
+*/
 //	uint8_t read_reg(uint8_t addr);
 //	void write_reg(uint8_t addr, uint8_t data);
 
@@ -149,25 +156,40 @@ void setCamByte(byte addr, byte val) {
 	byte checkVal;
 	dummy = myCAM.rdSensorReg8_8(addr, &orgVal);
 	myCAM.wrSensorReg8_8(addr, val);
+	//myCAM.write_reg(addr, val);  // TODO: Don't really know which one to use. None of them seems to work
 	dummy = myCAM.rdSensorReg8_8(addr, &checkVal);
 
-	Serial.printf(" SET BYTE at addr 0x%x", addr);
+/*	Serial.printf(" SET BYTE at addr 0x%x", addr);
 	Serial.print(" setVal= "); Serial.print(val,BIN);
 	Serial.print(" orgVal= "); Serial.print(orgVal, BIN);
 	Serial.print(" checkVal= "); Serial.println(checkVal, BIN);
+*/
 }
 
 void takePicture(long &nbrOfBytes, short &finalWidth, short &finalHeight, short &pixelSize) {
 
 	myCAM.set_format(JPEG);
+	//180211 myCAM.set_format(BMP);
 	myCAM.InitCAM();
+	//-setCamBit(0x12, BIT7, 1);  // SCCB register reset
+	// Working setup (next 2 lines):
+
+	/*180211*/
+	setCamBit(0x12, BIT2, 0); setCamBit(0x12, BIT0, 0); // YUV 
+	setCamBit(0x40, BIT4, 0); // Raw RGB (in combination with above)
+	setCamBit(0x13, BIT2, 1);  // AGC enable/disable
+	/**/
 
 	// Set up special effects on cam
 	//setCamByte(0x70, 0b10001000); // Grayscale test pattern + scaling
-	setCamBit(0x12, BIT2, 0); setCamBit(0x12, BIT0, 0); // YUV 
+	//setCamBit(0x12, BIT2, 0); setCamBit(0x12, BIT0, 0); // YUV 
 	//setCamBit(0x12, BIT2, 1); setCamBit(0x12, BIT0, 0); // Raw RGB 
-	setCamBit(0x40, BIT4, 0); // Raw RGB (in combination with above)
-	setCamBit(0x13, BIT2, 0);  // AGC enable/disable
+	//setCamBit(0x40, BIT4, 0); // Raw RGB (in combination with above)
+	//setCamBit(0x13, BIT2, 1);  // AGC enable/disable
+	//setCamBit(0x12, BIT1, 1); // Color bar enable
+	//setCamBit(0x70, BIT7, 1); setCamBit(0x71, BIT7, 0); // 8-bar color bar
+	//setCamByte(0x01, 0x00); // AWB blue channel gain (0 - FF)
+	//setCamByte(0x02, 0x00); // AWB red channel gain (0 - FF)
 
 	//Flush the FIFO
 	myCAM.flush_fifo();
@@ -185,7 +207,7 @@ void takePicture(long &nbrOfBytes, short &finalWidth, short &finalHeight, short 
 	#endif
 
 	// we know we are going to crop the image later, so we reduce the number know. 
-	//nbrOfBytes = (nbrOfBytes * (XCROP_END - XCROP_START + 1)) / IMAGE_WIDTH;
+	//nbrOfBytes = (nbrOfBytes * (YCROP_END - YCROP_START + 1)) / IMAGE_HEIGHT;
 	finalWidth = (XCROP_END - XCROP_START + 1);
 	finalHeight = (YCROP_END - YCROP_START + 1);
 	pixelSize = BYTES_PER_PIXEL;

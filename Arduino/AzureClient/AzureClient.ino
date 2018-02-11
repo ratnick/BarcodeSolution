@@ -10,7 +10,7 @@
 #define DOWNLOAD_PICTURE_FROM_WEB false
 #define TAKE_AND_UPLOAD_PICTURE_TO_BLOB true
 #define CALL_BARCODERECOGNITION_WEBJOB true
-//#define USE_WIFI  // If undefined, the serial port is used instead
+#define USE_WIFI  // If undefined, the serial port is used instead
 //#define DEBUG_PRINT
 
 // The Arduino device itself
@@ -21,14 +21,16 @@ WiFiClient wifiClient;
 
 // Image storage globals
 MessageData msgData;
-#define IMAGE_HEIGHT 240
-#define YCROP_START 1 // 191 // PIXELS starting with 1, MUST BE UN-EQUAL
-#define YCROP_END 240  //270 // PIXELS, MUST BE EQUAL
-#define IMAGE_WIDTH	320
-#define XCROP_START 1 // 191 // PIXELS starting with 1, MUST BE UN-EQUAL
-#define XCROP_END 320 //270 // PIXELS, MUST BE EQUAL
+#define IMAGE_WIDTH  320	// MUST CORRESPOND TO THE RAW READ-OUT FORMAT FROM THE CAMERA
+#define IMAGE_HEIGHT 240	// MUST CORRESPOND TO THE RAW READ-OUT FORMAT FROM THE CAMERA
 
-#define BYTES_PER_PIXEL 2 //RGB565
+// Used for on-board cropping:
+#define XCROP_START  23	// PIXELS starting with 1, MUST BE UN-EQUAL. 
+#define XCROP_END    310	// PIXELS, MUST BE EQUAL
+#define YCROP_START  101	// PIXELS starting with 1, MUST BE UN-EQUAL
+#define YCROP_END    150	// PIXELS, MUST BE EQUAL
+
+#define BYTES_PER_PIXEL 2 //both RGB565 and YUV422
 static String IMAGE_TYPE = "YUV422";
 
 
@@ -40,13 +42,13 @@ static String IMAGE_TYPE = "YUV422";
 	imageBufferSourceEnum imageBufferSource = InternalImageBuffer;
 	byte imageBuffer[MAX_IMAGE_SIZE]; //nnr char imageBuffer[10000];
 #else
-	#define MAX_IMAGE_SIZE  (XCROP_END-XCROP_START+1)*(YCROP_END-YCROP_START+1)   //10000 // if compile problem "Error linking for board WeMos D1 R2 & mini" reduce this number to reduce memory footprint
+	#define MAX_IMAGE_SIZE  (YCROP_END-YCROP_START+1)*(XCROP_END-XCROP_START+1)   //10000 // if compile problem "Error linking for board WeMos D1 R2 & mini" reduce this number to reduce memory footprint
 	imageBufferSourceEnum imageBufferSource = DirectFromCamera;
 	byte imageBuffer[1]; //nnr char imageBuffer[10000];
 #endif
 
 /*#elif USE_WIFI == false
-	#define MAX_IMAGE_SIZE  (XCROP_END-XCROP_START+1)*(YCROP_END-YCROP_START+1)   //10000 // if compile problem "Error linking for board WeMos D1 R2 & mini" reduce this number to reduce memory footprint
+	#define MAX_IMAGE_SIZE  (YCROP_END-YCROP_START+1)*(XCROP_END-XCROP_START+1)   //10000 // if compile problem "Error linking for board WeMos D1 R2 & mini" reduce this number to reduce memory footprint
 	imageBufferSourceEnum imageBufferSource = DirectFromCamera;
 #else
 	#define MAX_IMAGE_SIZE 1 
@@ -78,6 +80,7 @@ void setup() {
 
 
 	initFlashLED();
+	initPushButton();
 	LED_Flashes(5, 25);
 	initArduCAM();
 	delay(100);
@@ -113,6 +116,7 @@ void loop() {
 				delay(2000);
 			} */
 		} else {
+			waitUntilButtonPushed();
 			LED_ON();
 			takePicture(msgData.blobSize, finalWidth, finalHeight, pixelSize);  // note that this number indicates the size of the CROPPED image
 			LED_OFF();
@@ -122,7 +126,7 @@ void loop() {
 			readPicFromCamToImageBuffer(imageBuffer, msgData.blobSize);
 			LED_OFF();
 			//dumpImageData(imageBuffer, msgData.blobSize);
-			//dumpBinaryData(imageBuffer, msgData.blobSize);
+			//dumpBinaryData(imageBuffer, msgData.blobSize, "imageBuffer");
 		}
 		else {
 			// do nothing. The pic will be read directly from the camera from transmitDataOnWifi called by UploadToBlobOnAzure
@@ -131,7 +135,7 @@ void loop() {
 	else {
 		Serial.println("NO PHOTO TAKEN (enable compile flag to do this)");
 	}
-	msgData.blobName = FIXED_BLOB_NAME; 
+	msgData.blobName = FIXED_BLOB_NAME;
 	msgData.fullBlobName = "/" + String(cloud.storageContainerName) + "/" + String(cloud.deviceId) + "/" + String(msgData.blobName); // code39ex1.jpg";// " / input / " + String(cloud.deviceId) + " / input / " + String(msgData.blobName);
 
 #ifdef USE_WIFI
@@ -140,6 +144,7 @@ void loop() {
 
 		if (TAKE_AND_UPLOAD_PICTURE_TO_BLOB) {
 			if (UploadToBlobOnAzure(imageBufferSource, imageBuffer)) {
+				//dumpBinaryData(imageBuffer, msgData.blobSize, "imageBuffer");  //NB: Only works if image is NOT taken from camera but downloaded
 				Serial.println("Published Blob to Azure.");
 			}
 			else {
@@ -206,18 +211,18 @@ void dumpImageData(byte *buf, long nbrOfBytes) {
 	}
 }
 
-void dumpBinaryData(byte *buf, long nbrOfBytes) {
+void dumpBinaryData(byte *buf, long nbrOfBytes, String s) {
 
 	long i = 0;
-	Serial.printf("\ndumpBinaryData: %d bytes  ", nbrOfBytes);
+	Serial.printf("\ndumpBinaryData %d bytes of: ", nbrOfBytes);
+	Serial.println(s);
 
 	while (i < nbrOfBytes)
 	{
-		Serial.printf("%x ", (byte)buf[i]);
-		i++;
-		if (i % 10 == 0) { Serial.printf("i=%d  \n", i); }
+		Serial.printf("%x ", (byte)buf[i++]);
+		if (i % 8 == 0) { Serial.printf("\n"); }
 	}
-	Serial.println("");
+	//Serial.println("");
 }
 
 void transmitHeaderOnSerial(long nbrOfBytes, short finalWidth, short finalHeight, short pixelSize) {
@@ -255,85 +260,4 @@ void transmitHeaderOnSerial(byte *buf, long nbrOfBytes) {
 
 }
 
-int transmitDataOnSerialDELETE(int payloadSize, imageBufferSourceEnum imageBufferSource, byte *buf) {
-
-	int bytesWritten = 0;
-	int bytesRead = 0;
-	int chunkRead = 0;
-	int chunkStart = 0;
-	int chunkEnd = 0;
-	int nextChunk = 0;
-	//const int chunkSize = 2000;
-	const int chunkSize = BYTES_PER_PIXEL*(XCROP_END - XCROP_START + 1);   // one line's uncropped pixels (2 bytes per pixel)
-	uint8_t buffer[chunkSize];
-	uint8_t discardbuffer[BYTES_PER_PIXEL*IMAGE_HEIGHT];
-
-	readAndDiscardFirstByteFromCam();
-
-	// This is tricky: The payload size is the size of the CROPPED image. If no cropping, then payloadsize is the same as full image size
-
-	// read initial cropped VERTICAL lines from camera and discard them
-	for (int line = 1; line < XCROP_START; line++) {
-		nextChunk = BYTES_PER_PIXEL * IMAGE_HEIGHT;
-		chunkRead = readChunkFromCamToBuffer(discardbuffer, nextChunk);
-		bytesRead += chunkRead;
-		//Serial.printf("\nFIRST: (start:%d, end:%d, payload:%d, written:%d, read:%d, chunkSize=%d) DONE\n", chunkStart, chunkEnd, payloadSize, bytesWritten, bytesRead, chunkSize);
-	}
-
-	int l;
-	while (chunkEnd < payloadSize) {
-		if ((chunkStart + chunkSize) <= payloadSize) {   // more than one chunk to go
-			chunkEnd += chunkSize;
-		}
-		else {											// last chunk
-			chunkEnd = payloadSize;
-		}
-		if (imageBufferSource == InternalImageBuffer) {
-			memcpy(buffer, &imageBuffer[chunkStart], (chunkEnd - chunkStart + 1) * sizeof(char));
-		}
-		else {
-			// read directly from camera and transmit over wifi
-			// read from vertical line start to crop start and discard it
-			nextChunk = BYTES_PER_PIXEL*(YCROP_START - 1);
-			chunkRead = readChunkFromCamToBuffer(discardbuffer, nextChunk);
-			bytesRead += chunkRead;
-			//Serial.printf("\n1.   nextChunk=%d, chunkRead=%d, bytesRead=%d", nextChunk, chunkRead, bytesRead);
-			// read from crop start to crop end and buffer it
-			nextChunk = (chunkEnd - chunkStart);
-			chunkRead = readChunkFromCamToBuffer(buffer, nextChunk);
-			bytesRead += chunkRead;
-			//Serial.printf("\n2.   nextChunk=%d, chunkRead=%d, bytesRead=%d", nextChunk, chunkRead, bytesRead);
-			// read from crop end to line end and discard it
-			nextChunk = BYTES_PER_PIXEL*(IMAGE_HEIGHT - YCROP_END);
-			chunkRead = readChunkFromCamToBuffer(discardbuffer, nextChunk);
-			bytesRead += chunkRead;
-			//Serial.printf("\n3.   nextChunk=%d, chunkRead=%d, bytesRead=%d", nextChunk, chunkRead, bytesRead);
-		}
-		//dumpBinaryData(buffer, 10);
-		int len = chunkEnd - chunkStart;
-		if (len > 128) {
-			bytesWritten += Serial.write(buffer, len/2);
-			delay(20);
-			bytesWritten += Serial.write(&buffer[(len/2)], len/2);
-			delay(20);
-		}
-		else {
-			bytesWritten += Serial.write(buffer, len);
-		}
-		chunkStart += chunkSize;
-		//Serial.printf("\nMID: (start:%d, end:%d, payload:%d, written:%d, read:%d, chunkSize=%d) DONE\n", chunkStart, chunkEnd, payloadSize, bytesWritten, bytesRead, chunkSize);
-	}
-
-	// read last cropped lines from camera and discard them
-	// NOTE: 1 line extra is removed, since it seems like the camera reports one additional line ???
-	for (int line = XCROP_END; line < IMAGE_WIDTH+1; line++) {
-		nextChunk = BYTES_PER_PIXEL * IMAGE_HEIGHT;
-		chunkRead = readChunkFromCamToBuffer(discardbuffer, nextChunk);
-		bytesRead += chunkRead;
-		//Serial.printf("\nLAST: (start:%d, end:%d, payload:%d, written:%d, read:%d, chunkSize=%d) DONE\n", chunkStart, chunkEnd, payloadSize, bytesWritten, bytesRead, chunkSize);
-	}
-
-//DO	Serial.printf("\nEND: (payloadSize:%d, bytesWritten:%d, bytesRead:%d) DONE\n", payloadSize, bytesWritten, bytesRead);
-	return bytesWritten;
-}
 

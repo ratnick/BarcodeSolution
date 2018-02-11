@@ -1,5 +1,6 @@
 const int SPI_CS = 16;		 // SPI Pin on WeMos D1 Mini
 const int LED_PIN = D4;
+const int PUSHBUTTON_PIN = D8;
 
 enum LedState {
   LED_Off,
