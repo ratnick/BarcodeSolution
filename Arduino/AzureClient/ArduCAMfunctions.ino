@@ -138,13 +138,13 @@ void setCamBit(byte addr, byte bit, byte setVal) {
 	myCAM.wrSensorReg8_8(addr, newVal);
 	dummy = myCAM.rdSensorReg8_8(addr, &checkVal);
 
-	Serial.printf(" SET BIT %i  at addr 0x%x", getSetBitLocation(bit), addr);
+/*	Serial.printf(" SET BIT %i  at addr 0x%x", getSetBitLocation(bit), addr);
 	Serial.printf("  tmp= %x", tmp);
 	Serial.printf("  setVal= %x", setVal);
 	Serial.printf("  orgVal= %x ", orgVal);
 	Serial.printf(" newVal= %x ", newVal);
 	Serial.printf(" checkVal= %x \n", checkVal);
-
+*/
 //	uint8_t read_reg(uint8_t addr);
 //	void write_reg(uint8_t addr, uint8_t data);
 
@@ -159,22 +159,26 @@ void setCamByte(byte addr, byte val) {
 	//myCAM.write_reg(addr, val);  // TODO: Don't really know which one to use. None of them seems to work
 	dummy = myCAM.rdSensorReg8_8(addr, &checkVal);
 
-	Serial.printf(" SET BYTE at addr 0x%x", addr);
+/*	Serial.printf(" SET BYTE at addr 0x%x", addr);
 	Serial.print(" setVal= "); Serial.print(val,BIN);
 	Serial.print(" orgVal= "); Serial.print(orgVal, BIN);
 	Serial.print(" checkVal= "); Serial.println(checkVal, BIN);
+*/
 }
 
 void takePicture(long &nbrOfBytes, short &finalWidth, short &finalHeight, short &pixelSize) {
 
 	myCAM.set_format(JPEG);
-	//-myCAM.set_format(BMP);
+	//180211 myCAM.set_format(BMP);
 	myCAM.InitCAM();
 	//-setCamBit(0x12, BIT7, 1);  // SCCB register reset
 	// Working setup (next 2 lines):
+
+	/*180211*/
 	setCamBit(0x12, BIT2, 0); setCamBit(0x12, BIT0, 0); // YUV 
 	setCamBit(0x40, BIT4, 0); // Raw RGB (in combination with above)
 	setCamBit(0x13, BIT2, 1);  // AGC enable/disable
+	/**/
 
 	// Set up special effects on cam
 	//setCamByte(0x70, 0b10001000); // Grayscale test pattern + scaling

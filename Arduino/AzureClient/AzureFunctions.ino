@@ -161,8 +161,8 @@ int transmitHeaderOnWifi(String httpRequest) {
 
 //	Serial.println("TRANSMIT HTTP header to Azure:");
 	bytesWritten = tlsClient.print(httpRequest);
-//	Serial.print("transmitHeaderOnWifi: HTTP command: \n" + httpRequest + "===");
-//	Serial.printf("\nTotal of %d bytes in header. \nDATA TRANSMIT BEGIN:", bytesWritten);
+	Serial.print("transmitHeaderOnWifi: HTTP command: \n" + httpRequest + "===");
+	//Serial.printf("\nTotal of %d bytes in header. \nDATA TRANSMIT BEGIN:", bytesWritten);
 
 	return bytesWritten;
 }
@@ -203,7 +203,7 @@ int transmitDataOnWifiOrSerial(int payloadSize, imageBufferSourceEnum imageBuffe
 			chunkEnd = payloadSize;
 		}
 		if (imageBufferSource == InternalImageBuffer) {
-			memcpy(buffer, &imageBuffer[chunkStart], (chunkEnd - chunkStart + 1) * sizeof(char));
+			memcpy(buffer, &imageBuffer[chunkStart], (chunkEnd - chunkStart + 1) * sizeof(char)); //NNR Jeg tror rækkefølgen på argumenterne er forkert!!!
 		}
 		else {
 			// read directly from camera and transmit over wifi
@@ -212,11 +212,13 @@ int transmitDataOnWifiOrSerial(int payloadSize, imageBufferSourceEnum imageBuffe
 			chunkRead = readChunkFromCamToBuffer(discardbuffer, nextChunk);
 			bytesRead += chunkRead;
 			//Serial.printf("\n1.   nextChunk=%d, chunkRead=%d, bytesRead=%d", nextChunk, chunkRead, bytesRead);
+
 			// read from crop start to crop end and buffer it
 			nextChunk = (chunkEnd - chunkStart);
 			chunkRead = readChunkFromCamToBuffer(buffer, nextChunk);
 			bytesRead += chunkRead;
-			//Serial.printf("\n2.   nextChunk=%d, chunkRead=%d, bytesRead=%d", nextChunk, chunkRead, bytesRead);
+			//Serial.printf("\n2.   chunkStart=%d, nextChunk=%d, chunkRead=%d, bytesRead=%d", chunkStart, nextChunk, chunkRead, bytesRead);
+
 			// read from crop end to line end and discard it
 			nextChunk = BYTES_PER_PIXEL*(IMAGE_WIDTH - XCROP_END);
 			chunkRead = readChunkFromCamToBuffer(discardbuffer, nextChunk);
@@ -226,7 +228,8 @@ int transmitDataOnWifiOrSerial(int payloadSize, imageBufferSourceEnum imageBuffe
 		int len = chunkEnd - chunkStart;
 		#ifdef USE_WIFI
 			bytesWritten += tlsClient.write(buffer, len);
-		#else
+			//dumpBinaryData(buffer, len, "buffer transmitted over wifi");
+#else
 			if (len > 128) {
 				bytesWritten += Serial.write(buffer, len / 2);
 				delay(20);
@@ -412,6 +415,9 @@ String serializeDataBlob(MessageData data) {
 	root["Counter"] = ++sendCount;
 
 	root.printTo(buffer, sizeof(buffer));
+
+	//Serial.printf("serializeDataBlob: JSON: \n");
+	//Serial.println((String)buffer);
 
 	return (String)buffer;
 }

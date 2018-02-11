@@ -127,21 +127,6 @@ namespace ReadSerialPortWin
 
             pix1 = Color.FromArgb(1,  clamp(R0,0,255), clamp(G0,0,255), clamp(B0,0,255));
             pix2 = Color.FromArgb(1,  clamp(R1,0,255), clamp(G1,0,255), clamp(B1,0,255));
-
-
-            /*Trace.WriteLine("Sess:" + _readingImageSession.ToString() +
-                " i=" + i.ToString() + "  yy=" + yy.ToString() +
-                " Y0=" + Y0.ToString() + "  Cb=" + Cb.ToString() +
-                " Y1=" + Y1.ToString() + "  Cr=" + Cr.ToString() +
-                " ---   R=" + R.ToString() + " G=" + G.ToString() +" B=" + B.ToString() );*/
-            /*MyBitmap.SetPixel(2 * i, yy, Color.FromArgb(1, Convert.ToByte(R), Convert.ToByte(G), Convert.ToByte(B)));
-
-            R = clamp( Y1 +                         (1.4075 * (Cr - 128)), 0, 255);
-            G = clamp( Y1 - (0.3455 * (Cb - 128)) - (0.7169 * (Cr - 128)), 0, 255);
-            B = clamp( Y1 + (1.7790 * (Cb - 128)), 0, 255);
-
-            MyBitmap.SetPixel(2 * i + 1, yy, Color.FromArgb(1, Convert.ToByte(R), Convert.ToByte(G), Convert.ToByte(B)));
-            */
         }
 
         private Boolean ReadHeaderFromSerial(SerialPort sp, ref int width, ref int height, ref int pixelsize, ref int totalImageSize)
@@ -252,7 +237,6 @@ namespace ReadSerialPortWin
 
                 int pixHeight = pixelSize * height; 
                 int i = 0;
-                int j = 0;
                 byte[] rawData = new byte[totalImageSize];
                 Buffer.BlockCopy(imgBuf, 0, rawData, 0, totalImageSize);  // then we can keep the result in imgBuf
                 switch (ColorSpace)

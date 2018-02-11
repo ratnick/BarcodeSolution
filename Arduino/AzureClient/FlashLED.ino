@@ -28,8 +28,10 @@ void initPushButton() {
 }
 
 void waitUntilButtonPushed() {
+	Serial.print("\nWait for button to be pressed");
 	while (!digitalRead(PUSHBUTTON_PIN)) {
 		delay(50);
 	}
+	Serial.println("...done");
 }
 
