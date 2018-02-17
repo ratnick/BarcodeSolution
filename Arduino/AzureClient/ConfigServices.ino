@@ -55,8 +55,6 @@ void initCloudConfig(
 	const char *webAppFunctionKey,
 	const char *deviceId,
 	const char *deviceSASKey,
-	const char *ssid,
-	const char *pwd, 
 	const char *geo){
 
 //  initWifiDevice(ssid, pwd);

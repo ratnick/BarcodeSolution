@@ -17,7 +17,7 @@ int sendCount = 0;
 char buffer[512];
 
 // *** Function for initializing the connection to the cloud
-void azureCloudConfig(String &wifiname, String &wifipwd) {
+void azureCloudConfig() {
 	cloud.publishRateInSeconds = 90;     // limits publishing rate to specified seconds (default is 90 seconds).  Connectivity problems may result if number too small eg 2
 	cloud.sasExpiryDate = 1737504000;    // Expires Wed, 22 Jan 2025 00:00:00 GMT (defaults to Expires Wed, 22 Jan 2025 00:00:00 GMT)
 
@@ -32,8 +32,6 @@ void azureCloudConfig(String &wifiname, String &wifipwd) {
 		WEBAPP_FUNCTION_KEY,
 		THIS_DEVICE_NAME,
 		THIS_DEVICE_SAS,
-		wifiname.c_str(),
-		wifipwd.c_str(),
 		"Copenhagen");
 }
 
@@ -56,14 +54,14 @@ void initialiseStorageHub() {
 }
 
 int connectToAzure(const char *host) {  // true=OK; false=error
-	delay(500); // give network connection a moment to settle
+	//delay(500); // give network connection a moment to settle
 				//Serial.printf("Connecting to %s \n", host);
 	if (WiFi.status() != WL_CONNECTED) { return false; }
 	//Serial.printf("connectToAzure: Connecting to %s \n", host);
 	if (!tlsClient.connect(host, 443)) {      // Use WiFiClientSecure class to create TLS connection
-		Serial.print("Host connection failed.  WiFi IP Address: ");
+		Serial.print("Host TLS connection failed.  WiFi IP Address: ");
 		Serial.println(WiFi.localIP());
-		delay(2000);
+		//delay(2000);
 		return false;
 	}
 	else {
@@ -158,12 +156,11 @@ String createStorageHubSas(char *key, String url) {   // Based on createIotHubSa
 int transmitHeaderOnWifi(String httpRequest) {
 
 	int bytesWritten;
-
-//	Serial.println("TRANSMIT HTTP header to Azure:");
+	//Serial.println("TRANSMIT HTTP header to Azure:");
 	bytesWritten = tlsClient.print(httpRequest);
-	Serial.print("transmitHeaderOnWifi: HTTP command: \n" + httpRequest + "===");
+	LogLine(2, __FUNCTION__, "HTTP command (first 200 bytes): \n" + httpRequest.substring(0,200) + "\n===");
+	//Serial.print("transmitHeaderOnWifi: HTTP command: \n" + httpRequest + "===");
 	//Serial.printf("\nTotal of %d bytes in header. \nDATA TRANSMIT BEGIN:", bytesWritten);
-
 	return bytesWritten;
 }
 
@@ -175,8 +172,7 @@ int transmitDataOnWifiOrSerial(int payloadSize, imageBufferSourceEnum imageBuffe
 	int chunkStart = 0;
 	int chunkEnd = 0;
 	int nextChunk = 0;
-	//const int chunkSize = 2000;
-	const int chunkSize = BYTES_PER_PIXEL*(XCROP_END - XCROP_START + 1);   // one line's uncropped pixels (2 bytes per pixel)
+	const int chunkSize = BYTES_PER_PIXEL*(XCROP_END - XCROP_START + 1);   // 1 lines' uncropped pixels (2 bytes per pixel)
 	uint8_t buffer[chunkSize];
 	uint8_t discardbuffer[BYTES_PER_PIXEL*IMAGE_WIDTH];
 
@@ -247,6 +243,7 @@ int transmitDataOnWifiOrSerial(int payloadSize, imageBufferSourceEnum imageBuffe
 
 		chunkStart += chunkSize;
 		//Serial.printf("\nMID: (start:%d, end:%d, payload:%d, written:%d, read:%d, chunkSize=%d) DONE\n", chunkStart, chunkEnd, payloadSize, bytesWritten, bytesRead, chunkSize);
+		LED_Flashes(1, 2);
 	}
 
 	// read last cropped lines from camera and discard them
@@ -266,63 +263,16 @@ int transmitDataOnWifiOrSerial(int payloadSize, imageBufferSourceEnum imageBuffe
 	return bytesWritten;
 }
 
-int transmitDataOnWifiDELETE(int payloadSize, imageBufferSourceEnum imageBufferSource, byte *buf) {
-
-	int bytesWritten = 0;
-	int bytesRead = 0;
-	int chunkRead = 0;
-	int chunkStart = 0;
-	int chunkEnd = 0;
-	int nextChunk = 0;
-	//const int chunkSize = 2000;
-	const int chunkSize = BYTES_PER_PIXEL*(YCROP_END - YCROP_START + 1);   // one line's uncropped pixels (2 bytes per pixel)
-	uint8_t buffer[chunkSize];
-	uint8_t discardbuffer[BYTES_PER_PIXEL*IMAGE_HEIGHT ];
-
-	readAndDiscardFirstByteFromCam();
-	
-	// This is tricky: The payload size is the size of the CROPPED image. If no cropping, then payloadsize is the same as full image size
-
-	while (chunkEnd < payloadSize) {
-
-		if ((chunkStart + chunkSize) <= payloadSize) {   // more than one chunk to go
-			chunkEnd += chunkSize;
-		}
-		else {											// last chunk
-			chunkEnd = payloadSize;
-		}
-		if (imageBufferSource == InternalImageBuffer) {
-			memcpy(buffer, &imageBuffer[chunkStart], (chunkEnd - chunkStart) * sizeof(char));
-		}
-		else {
-			// read directly from camera and transmit over wifi
-			// read from line start to crop start and discard it
-			readChunkFromCamToBuffer(discardbuffer, BYTES_PER_PIXEL*(YCROP_START - 1));
-			// read from crop start to crop end and buffer it
-			readChunkFromCamToBuffer(buffer, (chunkEnd - chunkStart));
-			// read from crop end to line end and discard it
-			readChunkFromCamToBuffer(discardbuffer, BYTES_PER_PIXEL*(IMAGE_HEIGHT - YCROP_END));
-		}
-		//Serial.printf("\n(start:%d, end:%d, payload:%d, written:%d) Sending", chunkStart, chunkEnd, payloadSize, bytesWritten);
-		//dumpBinaryData(buffer, 10);
-		bytesWritten += tlsClient.write(buffer, (chunkEnd - chunkStart));
-		chunkStart += chunkSize;
-		//		Serial.printf("\n(start:%d, end:%d, payload:%d, written:%d) BEGIN", chunkStart, chunkEnd, payloadSize, bytesWritten);
-	}
-	Serial.printf("\n(start:%d, end:%d, payload:%d, written:%d) DONE\n", chunkStart, chunkEnd, payloadSize, bytesWritten);
-	return bytesWritten;
-}
-
 boolean ConnectAndFlushHost(const char *host) {
 
 	if (!tlsClient.connected()) {
 		if (!connectToAzure(host)) {
-			Serial.printf("not connected A: %s\n", host); return false;
+			LogLinef(0, __FUNCTION__, "not connected A: %s\n", host); return false;
 		}
 	}
 	if (connectToAzure(host) && tlsClient.connected()) { tlsClient.flush(); }
 	else {
-		Serial.printf("not connected B: %s\n", host); return false;
+		LogLinef(0, __FUNCTION__, "not connected B: %s\n", host); return false;
 	}
 
 }
@@ -337,8 +287,9 @@ int UploadToBlobOnAzure(imageBufferSourceEnum imageBufferSource, byte *buf) {
 	initialiseStorageHub();
 	host = cloud.storageHostname;
 
-	//Serial.println("UploadToBlobOnAzure: START");
-	//NNR: Is this really needed every time? Check up later.
+	InitDebugFunction(__FUNCTION__);
+	LogLine(2, __FUNCTION__, "start");
+	//TODO: Is this really needed every time? Check up later.
 	if (!tlsClient.connected()) { if (!connectToAzure(host)) { return false; } }
 
 	//Serial.printf("UploadToBlobOnAzure: connect to Azure %s\n", host);
@@ -348,10 +299,9 @@ int UploadToBlobOnAzure(imageBufferSourceEnum imageBufferSource, byte *buf) {
 	httpRequestBody = buildHttpRequestBlob(serializeDataBlob(msgData));
 	//Serial.printf("UploadToBlobOnAzure: HTTP request: %s\n", httpRequestBody.c_str());
 	bytesWritten = transmitHeaderOnWifi(httpRequestBody);
-	//bytesWritten = transmitDataOnWifiDELETE(msgData.blobSize, imageBufferSource, buf);
 	bytesWritten = transmitDataOnWifiOrSerial(msgData.blobSize, imageBufferSource, buf);
 
-	//Serial.printf("UploadToBlobOnAzure: Read reply from server\n");
+	LogLine(2, __FUNCTION__, "Read reply from server");
 	String response = "";
 	String chunk = "";
 	int limit = 1;
@@ -369,12 +319,16 @@ int UploadToBlobOnAzure(imageBufferSourceEnum imageBufferSource, byte *buf) {
 
 	// Print debug info in case of error
 	if (success) {
-		Serial.printf("\npublishToAzure: SUCCESS.  %s response code: %s Full blobname: %s\n", host, response.substring(9, 12).c_str(), msgData.fullBlobName.c_str());
+		LogLinef(2, __FUNCTION__ , "publishToAzure: SUCCESS.  %s response code: %s Full blobname: %s\n", host, response.substring(9, 12).c_str(), msgData.fullBlobName.c_str());
 	}
 	else {
-		Serial.printf("\nERROR in publish to Azure server %s. Server response code: ", host);
-		if (response.length() > 12) { Serial.println(response.substring(9, 12)); }
-		else { Serial.println("unknown"); }
+		LogLinef(2, __FUNCTION__, "publishToAzure: ERROR uploading to %s. Server response code: ", host);
+		if (response.length() > 12) {
+			LogLine(2, __FUNCTION__, response.substring(9, 12));
+		}
+		else { 
+			LogLine(2, __FUNCTION__, "unknown");
+		}
 		Serial.print("\nHTTP command: \n" + httpRequestBody + "\n===\n");
 		Serial.println("\nServer response: ");
 		Serial.println(response);
@@ -438,10 +392,10 @@ int SendDeviceToCloudHttpFunctionRequest(imageBufferSourceEnum imageBufferSource
 	tmp = String("https://") + cloud.webAppHostName + "/api/" + cloud.webAppFunctionName + "?code=" + cloud.webAppFunctionKey;
 	sURL = tmp.c_str();
 
-	//Serial.println("SendDeviceToCloudHttpFunctionRequest: START ");
+	LogLinef(1, __FUNCTION__, "START ");
 	ConnectAndFlushHost(host);
 
-	//Serial.printf("SendDeviceToCloudHttpFunctionRequest: Build HTTP msg and send it\n");
+	//Serial.printf("Build HTTP msg and send it\n");
 	// Build HTTP msg and send it
 	httpRequestBody = serializeDataWebApp(msgData);
 	httpRequest = buildHttpRequestWebApp(httpRequestBody);
@@ -453,7 +407,7 @@ int SendDeviceToCloudHttpFunctionRequest(imageBufferSourceEnum imageBufferSource
 //	tlsClient.println("Connection: close");
 	tlsClient.println();
 	
-	//Serial.printf("SendDeviceToCloudHttpFunctionRequest: Read reply from server\n");
+	LogLinef(1, __FUNCTION__, "Read reply from server");
 	String response = "";
 	String chunk = "";
 	int limit = 1;
@@ -464,40 +418,48 @@ int SendDeviceToCloudHttpFunctionRequest(imageBufferSourceEnum imageBufferSource
 			response += chunk + "\n";
 		}
 		else {
-			Serial.printf("not connected C");
+			LogLinef(0, __FUNCTION__, "not connected");
 		}
 	} while (chunk.length() > 0 && ++limit < 100);
 
-	// Interprete the result to success or error
-	if (response.substring(9, 12) == "200") { success = true; }
-	else { success = false; }
-
-	// Print debug info in case of error
-	if (success) {
-		Serial.printf("\SendDeviceToCloudHttpFunctionRequest: SUCCESS. %s responded: %s\n", host, response.substring(9, 12).c_str());
-		Serial.println(response);
+	// check return code (200 => successful HTTP request)
+	if (response.substring(9, 12) == "200") { 
+		LogLinef(1, __FUNCTION__, " %s SUCCESSFUL response code: %s\n", host, response.substring(9, 12).c_str());
+		success = true;
+	} else { 
+		success = false; 
 	}
-	else {
-		Serial.print("\nERROR when sending HTTP request to Webfunction HttpPOST-processing (to process barcode image): \nHTTP command was: \n" + httpRequest + "\n");
-		Serial.printf("\nSendDeviceToCloudHttpFunctionRequest %s. Server response code: ", host);
-		if (response.length() > 12) { 
-			Serial.println(response.substring(9, 12)); 
-		} else { 
-			Serial.printf("No or very short answer from host\n"); 
+
+	// check that a barcode has been found
+	if (success) {
+		int barcodePos = response.indexOf("Barcode: ") + 9; //9 = length of the search string
+		String barcode = response.substring(barcodePos);
+		if (barcode.length() > 4) {
+			LogLinef(1, __FUNCTION__, "BARCODE IS: %s ", barcode.c_str());
 		}
-		Serial.print("\nHTTP command was: \n" + httpRequest + "\n");
+		else {
+			LogLinef(0, __FUNCTION__, "Barcode NOT read properly");
+			Serial.printf("  barcode.c_str(): |%s|\n", barcode.c_str());
+			Serial.printf("  barcodePos = %i ", barcodePos);
+			Serial.printf("  barcode.length() = %i ", barcode.length());
+			Serial.printf("  full response: %s \n", response.c_str());
+			success = false;
+		}
+	}
+
+	// print out debug info in case of error
+	if (!success) {
+		LogLinef(0, __FUNCTION__, "ERROR when sending HTTP request to Webfunction HttpPOST-processing (to process barcode image).");
+		Serial.printf("Bytes sent in header+data: %d\n", bytesWritten);
+		Serial.print("\nHTTP COMMAND: \n" + httpRequest + "\n");
+		Serial.printf("No or very short answer from host\n");
 		Serial.println("===");
-		Serial.println("\nServer response was: ");
-		Serial.println(response);
+		LogLine(0, __FUNCTION__, "SERVER RESPONSE: \n" + response + "\n");
 		Serial.println("===");
-		Serial.printf("SendDeviceToCloudHttpFunctionRequest: Bytes sent in header+data: %d\n", bytesWritten);
-/*		Serial.printf("SendDeviceToCloudHttpFunctionRequest: ESP Free heap memory (bytes): %d\n", ESP.getFreeHeap());
-		Serial.printf("SendDeviceToCloudHttpFunctionRequest: Message count: %d\n", sendCount);
-		Serial.printf("SendDeviceToCloudHttpFunctionRequest: Response chunks (limit): %d\n", limit);
-		Serial.println("===");
-*/	}
+	}
 
 	return (int)success;
+
 }
 
 String buildHttpRequestWebApp(String data) {
@@ -563,35 +525,6 @@ String serializeDataWebApp(MessageData msgData) {
 */
 	root.printTo(buffer, sizeof(buffer));
 	return (String)buffer;
-}
-
-
-
-// *** Unused functions
-String buildHttpRequestWebAppTEST_WORKS(String data) {
-	// PURELY TEST
-	return String("POST /api/HttpSimpleTest?code=2ZhGue1npjZToZQXwiXOTIEqbNNXshvAs6cy/kVJ/i8HaTRixOaUmg== HTTP/1.1\n") +
-		"Host: nnriotwebapps.azurewebsites.net\n" +
-		"Content-Type: application/json\n" +
-		"Content-Length: 42\n" +
-		"Cache-Control: no-cache\n" +
-		"Connection: Keep-Alive\n" +
-		"\n" +
-		"{\"name\":\"Nikolaj\", \"parm2\":\"parm 2 value\"}" +
-		"";
-}
-
-String buildHttpRequestWebAppTESTDATA(String data) {
-	// PURELY TEST
-	return String("POST /api/HttpSimpleTest?code=2ZhGue1npjZToZQXwiXOTIEqbNNXshvAs6cy/kVJ/i8HaTRixOaUmg== HTTP/1.1\n") +
-		"Host: nnriotwebapps.azurewebsites.net\n" +
-		"Content-Type: application/json\n" +
-		"Content-Length: " + data.length() + "\n" +   // length must include the surrounding brackets
-		"Cache-Control: no-cache\n" +
-		"Connection: Keep-Alive\n" +
-		"\n" +
-		data +
-		"";
 }
 
 String buildBlobHttpRequestWORKS(String data) {

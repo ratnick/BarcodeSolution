@@ -11,6 +11,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ReadSerialPortWin", "Window
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ArduCAM_REVC_Digital_Camera", "..\..\src\Arduino\ArduCAM_REVC_Digital_Camera\ArduCAM_REVC_Digital_Camera.vcxproj", "{D4903DB0-EF99-49A6-96E9-A8E3E1CFA729}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testLogLib", "..\Common\Arduino\CommonNNR\testLogLib.vcxproj", "{C5F80730-F44F-4478-BDAE-6634EFC2CA88}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ov_fifo_test", "Arduino\arduvision\arduvision_01\arduino\ov_fifo_test\ov_fifo_test.vcxproj", "{DA942854-46EE-4E3B-96DA-2F5A11B430D8}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LogLib", "J:\NNR-DATA\_Dev\src\Arduino\libraries\LogLib\LogLib.vcxproj", "{4CC37F2A-1821-46F8-92EC-DB055D02D759}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{80032ECE-ABC0-4C4D-B4DE-A54D2A04EC13}"
+	ProjectSection(SolutionItems) = preProject
+		Arduino\arduvision\arduvision_01\processing\receive_stream\receive_stream.pde = Arduino\arduvision\arduvision_01\processing\receive_stream\receive_stream.pde
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -63,8 +74,37 @@ Global
 		{D4903DB0-EF99-49A6-96E9-A8E3E1CFA729}.Release|x64.ActiveCfg = Release|Win32
 		{D4903DB0-EF99-49A6-96E9-A8E3E1CFA729}.Release|x86.ActiveCfg = Release|Win32
 		{D4903DB0-EF99-49A6-96E9-A8E3E1CFA729}.Release|x86.Build.0 = Release|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x64.ActiveCfg = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.ActiveCfg = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Debug|x86.Build.0 = Debug|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|Any CPU.ActiveCfg = Release|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x64.ActiveCfg = Release|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.ActiveCfg = Release|Win32
+		{C5F80730-F44F-4478-BDAE-6634EFC2CA88}.Release|x86.Build.0 = Release|Win32
+		{DA942854-46EE-4E3B-96DA-2F5A11B430D8}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{DA942854-46EE-4E3B-96DA-2F5A11B430D8}.Debug|x64.ActiveCfg = Debug|Win32
+		{DA942854-46EE-4E3B-96DA-2F5A11B430D8}.Debug|x86.ActiveCfg = Debug|Win32
+		{DA942854-46EE-4E3B-96DA-2F5A11B430D8}.Debug|x86.Build.0 = Debug|Win32
+		{DA942854-46EE-4E3B-96DA-2F5A11B430D8}.Release|Any CPU.ActiveCfg = Release|Win32
+		{DA942854-46EE-4E3B-96DA-2F5A11B430D8}.Release|x64.ActiveCfg = Release|Win32
+		{DA942854-46EE-4E3B-96DA-2F5A11B430D8}.Release|x86.ActiveCfg = Release|Win32
+		{DA942854-46EE-4E3B-96DA-2F5A11B430D8}.Release|x86.Build.0 = Release|Win32
+		{4CC37F2A-1821-46F8-92EC-DB055D02D759}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{4CC37F2A-1821-46F8-92EC-DB055D02D759}.Debug|x64.ActiveCfg = Debug|x64
+		{4CC37F2A-1821-46F8-92EC-DB055D02D759}.Debug|x64.Build.0 = Debug|x64
+		{4CC37F2A-1821-46F8-92EC-DB055D02D759}.Debug|x86.ActiveCfg = Debug|Win32
+		{4CC37F2A-1821-46F8-92EC-DB055D02D759}.Debug|x86.Build.0 = Debug|Win32
+		{4CC37F2A-1821-46F8-92EC-DB055D02D759}.Release|Any CPU.ActiveCfg = Release|Win32
+		{4CC37F2A-1821-46F8-92EC-DB055D02D759}.Release|x64.ActiveCfg = Release|x64
+		{4CC37F2A-1821-46F8-92EC-DB055D02D759}.Release|x64.Build.0 = Release|x64
+		{4CC37F2A-1821-46F8-92EC-DB055D02D759}.Release|x86.ActiveCfg = Release|Win32
+		{4CC37F2A-1821-46F8-92EC-DB055D02D759}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DCA7C9E7-B75E-4112-9B39-AAD724EEE6C4}
 	EndGlobalSection
 EndGlobal

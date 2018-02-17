@@ -1,4 +1,4 @@
-#include <ArduCAM.h>		// added to enable Arducam interface. REMEMBER TO CONFIGURE memorysaver.h in the ArduCAM library
+#include <ArduCAM.h>		// added to enable Arducam interface. REMEMBER TO CONFIGURE memorysaver.h in the ArduCAM library (see https://github.com/ArduCAM/Arduino (Enable Rev C++ board and OV7670 cam)
 #include <SPI.h>			// added to enable Arducam interface
 #include "memorysaver.h"
 
@@ -190,7 +190,6 @@ void takePicture(long &nbrOfBytes, short &finalWidth, short &finalHeight, short 
 	//setCamBit(0x70, BIT7, 1); setCamBit(0x71, BIT7, 0); // 8-bar color bar
 	//setCamByte(0x01, 0x00); // AWB blue channel gain (0 - FF)
 	//setCamByte(0x02, 0x00); // AWB red channel gain (0 - FF)
-
 	//Flush the FIFO
 	myCAM.flush_fifo();
 	//Clear the capture done flag
@@ -198,6 +197,8 @@ void takePicture(long &nbrOfBytes, short &finalWidth, short &finalHeight, short 
 	//Start capture
 	myCAM.start_capture();
 	//Serial.println(F("take picture."));
+	
+	// NNR crash next line 181104:
 	while (!myCAM.get_bit(ARDUCHIP_TRIG, CAP_DONE_MASK));
 	//Serial.println(F("Capture Done."));
 	nbrOfBytes = myCAM.read_fifo_length();
@@ -288,4 +289,38 @@ void flushCamFIFO() {
 
 void closeCamera() {
 	myCAM.CS_HIGH();
+}
+
+
+/*
+5.7 Low Power Mode
+For some battery powered device power consumption is very important. There are two levels
+to achieve low power mode, user have to combine these modes according to their own power
+strategy.
+
+5.7.1 Power down the sensor circuit
+ArduCAM Camera Shield Software Application Note
+13 www.ArduCAM.com
+It is achieved by controlling the power enable pin of the onboard LDOs. The power enable
+pin is controlled by the GPIO[2] of ArduChip. By sending the command code 0x86 and write ‘1’
+to bit[2] to enable the LDOs, or write ‘0’ to bit[2] to disable the LDOs to save power. Note that
+power down the sensor circuit, the camera settings are lost. User should reinitialize the sensor
+when power up the sensor circuit again.
+
+5.7.2 Sensor standby
+It is achieved by controlling the power enable pin of the onboard LDOs. The power enable
+pin is controlled by the GPIO[1] of ArduChip. By sending the command code 0x86 and write ‘1’
+to bit[1] to set the sensor into standby mode, or write ‘0’ to bit[1] to set the sensor out of standby
+mode. Note that the sensor settings are not lost when in standby mode, and reinitialize is not
+needed.
+*/
+
+void ArduCamEnterLowPower() {
+	setCamBit(ARDUCHIP_GPIO, BIT2, 0);  // Power down the sensor circuit
+	setCamBit(ARDUCHIP_GPIO, BIT1, 0);  // Sensor standby
+}
+
+void ArduCAMLeaveLowPower() {
+	setCamBit(ARDUCHIP_GPIO, BIT2, 1);  // Power down the sensor circuit
+	setCamBit(ARDUCHIP_GPIO, BIT1, 1);  // Sensor standby
 }
