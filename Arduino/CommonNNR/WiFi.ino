@@ -14,13 +14,13 @@
 
 void initWifiDevice(int wifiSet) {   //wifiset always zero at the moment. But in time, it will be used for retries at different wifi ssid
 
-	wifiDevice.wifiPairs = 4;		 // nbr of sets below. If e.g. set to 1, only first set is tried.
+	wifiDevice.wifiPairs = 2;		 // nbr of sets below. If e.g. set to 1, only first set is tried.
 	switch (wifiSet) {
-	case 2:
+	case 1:
 		wifiDevice.ssid = "Nik Z5";
 		wifiDevice.pwd = "RASMUSSEN";
 		break;
-	case 1:
+	case 2:
 		wifiDevice.ssid = "nohrTDC";
 		wifiDevice.pwd = "RASMUSSEN";
 		break;

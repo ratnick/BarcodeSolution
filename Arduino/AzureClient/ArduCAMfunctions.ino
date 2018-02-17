@@ -55,8 +55,8 @@ void initArduCAM() {
 	} 
 
 	// sent to Azure in HTTP call
-	msgData.imageWidth =  YCROP_END - YCROP_START + 1;
-	msgData.imageHeight = XCROP_END - XCROP_START + 1; 
+	msgData.imageWidth = XCROP_END - XCROP_START + 1;
+	msgData.imageHeight = YCROP_END - YCROP_START + 1; 
 	msgData.imageType = IMAGE_TYPE;
 
 #if defined (OV2640_CAM)

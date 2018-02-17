@@ -18,8 +18,8 @@ namespace ReadSerialPortWin
 {
     public partial class frmPrinc : Form
     {
-        private const int WIDTH = 320; //320; //30; //160;
-        private const int HEIGHT = 240; //240; //120;
+        private const int WIDTH = 320; 
+        private const int HEIGHT = 240;
         private int width = 0;
         private int height = 0;
         private int pixelSize = 0; //bytes per pixel
@@ -31,6 +31,8 @@ namespace ReadSerialPortWin
         private Int32 byteCount = 0;
 
         private SerialPort _mySerialPort { get; set; }
+
+        public byte[] imgBuf = new byte[2*WIDTH*HEIGHT];
 
         private enum COLORSPACE { YUV422, RGB565, BAYER_RGB};
         private COLORSPACE ColorSpace = COLORSPACE.YUV422;
@@ -125,6 +127,11 @@ namespace ReadSerialPortWin
             double G1 = Y1 - (0.3455 * (Cr - 128)) - (0.7169 * (Cb - 128));
             double B1 = Y1 + (1.7790 * (Cr - 128));
 
+            if (false) // true = convert to B/W only
+            {
+                R0 = Y0; G0 = Y0; B0 = Y0; R1 = Y1; G1 = Y1; B1 = Y1;
+            }
+
             pix1 = Color.FromArgb(1,  clamp(R0,0,255), clamp(G0,0,255), clamp(B0,0,255));
             pix2 = Color.FromArgb(1,  clamp(R1,0,255), clamp(G1,0,255), clamp(B1,0,255));
         }
@@ -136,49 +143,55 @@ namespace ReadSerialPortWin
             int bytesInBuffer = 0;
             var header_buffer = new byte[100];
             // look for "###" probably indicating first byte in header
-            while (sp.ReadChar() != '#') ;
-            if ((sp.ReadChar() == '#') && (sp.ReadChar() == '#'))
+            try
             {
-                if (sp.BytesToRead > 0)
+                while (sp.ReadChar() != '#') ;
+                if ((sp.ReadChar() == '#') && (sp.ReadChar() == '#'))
                 {
-                    bytesInBuffer = sp.BytesToRead;
-                    bytesRead = sp.Read(header_buffer, 0, 15);  //15: *RDY* (5bytes) + width (2b) + height (2b) + pixelSize (2b) + totalBytes (4b)
-                    PrintBuffer(header_buffer, bytesRead);
-                }
-                //LblStatus($"bytesRead: bytes={buffer.Length}: {buffer[0]}-{buffer[1]}-{buffer[2]}-{buffer[3]}-{buffer[4]}");
-
-                if (bytesRead > 4 && header_buffer[0] == '*' && header_buffer[1] == 'R' && header_buffer[2] == 'D' && header_buffer[3] == 'Y' && header_buffer[4] == '*')  // Look for *RDY* to sync image start
-                {
-                    _readingImage = true;
-                    Trace.WriteLine("Setting ReadingImage. Session=" + _readingImageSession.ToString() + "  ReadingImage=" + _readingImage.ToString());
-                    // reader width, height and size information:
-                    width = (int)((byte)(header_buffer[6]) << 8 | (byte)(header_buffer[5]));
-                    height = (int)((byte)(header_buffer[8]) << 8 | (byte)(header_buffer[7]));
-                    pixelSize = (int)((byte)(header_buffer[10]) << 8 | (byte)(header_buffer[9]));
-                    totalImageSize = (int)(
-                        (byte)(header_buffer[14]) << 24 | (byte)(header_buffer[13]) << 16 |
-                        (byte)(header_buffer[12]) << 8 | (byte)(header_buffer[11]));
-                    if ((width != WIDTH) || (height != HEIGHT))
+                    if (sp.BytesToRead > 0)
                     {
-                        String s = "";
-                        for (int i = 0; i < 13; i++)
-                        {
-                            s = s + " " + i.ToString() + ":" + header_buffer[i].ToString();
-                        }
-                        Trace.WriteLine("*** WARNING: Height or width inconsistent. \nReceived width=" + width.ToString() + " WIDTH=" + WIDTH.ToString() + " received height=" + height.ToString() + " HEIGHT=" + HEIGHT.ToString() );
-                        Trace.WriteLine("*** DUMP of header: " + s);
-                        Trace.WriteLine("    (If numbers received are too crazy, maybe DEBUG_PRINT is on? )");
+                        bytesInBuffer = sp.BytesToRead;
+                        bytesRead = sp.Read(header_buffer, 0, 15);  //15: *RDY* (5bytes) + width (2b) + height (2b) + pixelSize (2b) + totalBytes (4b)
+                        PrintBuffer(header_buffer, bytesRead);
                     }
-                    bytesRead = 0;
-                    header_buffer[0] = 0;
-                    byteCount = 0;
+                    //LblStatus($"bytesRead: bytes={buffer.Length}: {buffer[0]}-{buffer[1]}-{buffer[2]}-{buffer[3]}-{buffer[4]}");
 
-                    Trace.WriteLine("*** *RDY* found. Session:" + _readingImageSession.ToString() + " data width:" + width.ToString() + "  data height:" + height.ToString() + "  size:" + totalImageSize.ToString());
-                    //LblStatus("Found *RDY*");
-                    LblStatus($"Reading image from serial port {cboSerialPorts.SelectedText}...");
-                    return true;
+                    if (bytesRead > 4 && header_buffer[0] == '*' && header_buffer[1] == 'R' && header_buffer[2] == 'D' && header_buffer[3] == 'Y' && header_buffer[4] == '*')  // Look for *RDY* to sync image start
+                    {
+                        _readingImage = true;
+                        Trace.WriteLine("Setting ReadingImage. Session=" + _readingImageSession.ToString() + "  ReadingImage=" + _readingImage.ToString());
+                        // reader width, height and size information:
+                        width = (int)((byte)(header_buffer[6]) << 8 | (byte)(header_buffer[5]));
+                        height = (int)((byte)(header_buffer[8]) << 8 | (byte)(header_buffer[7]));
+                        pixelSize = (int)((byte)(header_buffer[10]) << 8 | (byte)(header_buffer[9]));
+                        totalImageSize = (int)(
+                            (byte)(header_buffer[14]) << 24 | (byte)(header_buffer[13]) << 16 |
+                            (byte)(header_buffer[12]) << 8 | (byte)(header_buffer[11]));
+                        if ((width != WIDTH) || (height != HEIGHT))
+                        {
+                            String s = "";
+                            for (int i = 0; i < 13; i++)
+                            {
+                                s = s + " " + i.ToString() + ":" + header_buffer[i].ToString();
+                            }
+                            Trace.WriteLine("*** WARNING: Height or width inconsistent. \nReceived width=" + width.ToString() + " WIDTH=" + WIDTH.ToString() + " received height=" + height.ToString() + " HEIGHT=" + HEIGHT.ToString() );
+                            Trace.WriteLine("*** DUMP of header: " + s);
+                            Trace.WriteLine("    (If numbers received are too crazy, maybe DEBUG_PRINT is on? )");
+                        }
+                        bytesRead = 0;
+                        header_buffer[0] = 0;
+                        byteCount = 0;
+
+                        Trace.WriteLine("*** *RDY* found. Session:" + _readingImageSession.ToString() + " data width:" + width.ToString() + "  data height:" + height.ToString() + "  size:" + totalImageSize.ToString());
+                        //LblStatus("Found *RDY*");
+                        LblStatus($"Reading image from serial port {cboSerialPorts.SelectedText}...");
+                        return true;
+                    }
                 }
+            } catch {
+                ;
             }
+
             return false;
 
         }
@@ -188,7 +201,6 @@ namespace ReadSerialPortWin
             int bytesInBuffer = 0;
             int bytesRead = 0;
             byte[] buffer = new byte[2*WIDTH*HEIGHT];  //2* to accomodate for yvu422 or rgb565 coding (two bytes per pixel)
-            byte[] imgBuf = new byte[2*WIDTH*HEIGHT];
 
             byte R; byte G1; byte G2; byte G; byte B; 
             Color pix1 = Color.Black; Color pix2 = Color.Black;
@@ -255,27 +267,7 @@ namespace ReadSerialPortWin
                         }
                         break;
 
-                    case COLORSPACE.RGB565:
-                        /*for (int h = 0; h < height; h++)
-                        {
-                            int offset = h * pixWidth;
-                            for (int w = 0; w < pixWidth; w++)
-                            {
-                                i = offset + w;
-                                j = offset + (pixWidth - 1) - w;
-                                if (i < 0 || i >= totalImageSize || j < 0 || j >= totalImageSize)
-                                {
-                                    Trace.WriteLine("h=" + h + " offset=" + offset + " pixw=" + pixWidth + " i=" + i + " j=" + j);
-                                }
-                                else
-                                {
-                                    //Trace.WriteLine("i=" + i.ToString() + " imgBuf[i]=" + imgBuf[i].ToString() + "   j=" + j.ToString() + " rawData[j]=" + rawData[j].ToString()); 
-                                    imgBuf[i] = rawData[j];
-                                }
-                            }
-                        }
-                        Trace.WriteLine("ConvertImageFileFormat: mirroring done");
-                        */
+                    case COLORSPACE.RGB565:  // Not used for OV7670
                         i = 0;
                         for (int x = 0; x < width; x++)
                         {
@@ -390,6 +382,19 @@ namespace ReadSerialPortWin
             if (dlgSaveFile.ShowDialog(this) == DialogResult.OK)
             {
                 MyBitmap.Save(dlgSaveFile.FileName, ImageFormat.Bmp);
+                           // byte[] imgBuf = new byte[2*WIDTH*HEIGHT];
+                //File.WriteAllBytes(dlgSaveFile.FileName+".bin", imgBuf); 
+                try
+                {
+                    using (var fs = new FileStream(dlgSaveFile.FileName+".bin", FileMode.Create, FileAccess.Write))
+                    {
+                        fs.Write(imgBuf, 0, totalImageSize);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception caught in process: {0}", ex);
+                }
             }
         }
 

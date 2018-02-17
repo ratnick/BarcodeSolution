@@ -1,0 +1,14 @@
+﻿{
+  "frameworks": {
+    "net46": {
+      "dependencies": {
+        "Aspose.BarCode-Cloud": "1.0.3"
+      }
+    },
+    "net40": {
+      "dependencies": {
+        "Newtonsoft.Json": "10.0.3"
+      }
+    }
+  }
+}
