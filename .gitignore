@@ -1,0 +1,36 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+*.db
+*.o
+*.d
+.vs*
+*vcxproj*
+*.sln
+Arduino/*/_*vm*
+Arduino/*/Debug*
+Arduino/*/Release*
+arduino/testboard*
+arduino/*/_*vm*
+arduino/*/Debug*
+arduino/*/Release*
+arduino/testboard*
+*.old.ino
+3D print/Base-2.stl
+3D print/Base.stl
+3D print/tower v1.stl
+3D print/tower v36.stl
+3D print/tower with LED.stl
+3D print/tower.3w
+3D print/tower.stl
+3D print/TOWERV~1.3w
+/Arduino/arduvision/arduvision_01/arduino/ov_fifo_test/Release
+/Arduino/arduvision/arduvision_01/arduino/ov_fifo_test/__vm
+/Arduino/arduvision/arduvision_02_mega/arduino/ov_fifo_test_mega/__vm
+/Azure/HttpPOST-processing2/obj
+/tmp
+/Windows/ReadSerialPortWin/bin
+/Windows/ReadSerialPortWin/obj
+/Windows/SimulatedDevice/bin
+/Windows/SimulatedDevice/obj
+/Windows/SimulatedDevice/packages
