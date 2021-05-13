@@ -2,7 +2,7 @@
 Arduino (WeMOS D1 mini) based barcode reader using cheap camera and Azure services.
 Complete setup guide found here.
 
-Contents
+Contents (found under /docs)
 
 1	ArduCAM + Arduino Mini D1	
 1.2	Installing OV7670 WITH ARDUCAM REV C+ camera shield with SERIAL DATA interface to Wemos D1 mini	
